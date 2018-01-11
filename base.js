@@ -27,7 +27,7 @@ const slackmsg = {
   attachments: attachments
 }
 
-symbols.map((symbol, symbolindex) => {
+let symbolpromises = symbols.map((symbol, symbolindex) => {
   attachments.push({
     author_name: symbol.name,
     author_icon: 'https://assets.kucoin.com/www/1.2.6/assets/coins/' + symbol.name + '.png',
@@ -45,22 +45,24 @@ symbols.map((symbol, symbolindex) => {
     ]
   })
 
-  exchange.map((exchange, exchangeindex) => {
-    fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange)
+  let exchangepromises = exchange.map((exchange, exchangeindex) => {
+    return fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange)
       .then(res => res.json())
       .then(res => {
         attachments[symbolindex].fields[exchangeindex].value = 'last price: ' + res.data.lastDealPrice + '\n change rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%'
       })
   })
+
+  return Promise.all(exchangepromises)
 })
 
-setTimeout(() => {
-  fetch(slackwebhook, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(slackmsg)
+Promise.all(symbolpromises)
+  .then(() => {
+    fetch(slackwebhook, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(slackmsg)
+    })
   })
-}, 1000)
-
