@@ -7,13 +7,15 @@ const symbols = [
   {
     name: 'DBC',
     color: '#41c2d2',
-
+    price: ''
   }, {
     name: 'VEN',
-    color: '#8E86D5'
+    color: '#8E86D5',
+    price: ''
   }, {
     name: 'PRL',
-    color: '#315cab'
+    color: '#315cab',
+    price: ''
   }
 ]
 
@@ -72,15 +74,11 @@ fetch('https://api.kucoin.com/v1/open/currencies?coins=BTC,ETH')
         return fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange.name)
           .then(res => res.json())
           .then(res => {
-            if (exchange.name === 'BTC') {
-              if (!slackmsg.text) {
-                slackmsg.text = symbol.name + ': $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
-              } else {
-                slackmsg.text = slackmsg.text + ' | ' + symbol.name + ': $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
-              }
-            }
-
             attachments[symbolindex].fields[exchangeindex].value = 'last: ' + res.data.lastDealPrice + '\n rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%' + '\n price: $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+
+            if (exchange.name === 'BTC') {
+              symbols[symbols.findIndex(item => item.name === symbol.name)].price = '$' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+            }
           })
       })
 
@@ -88,6 +86,15 @@ fetch('https://api.kucoin.com/v1/open/currencies?coins=BTC,ETH')
     })
 
     Promise.all(symbolpromises)
+      .then(() => {
+        symbols.map(symbol => {
+          if (!slackmsg.text) {
+            slackmsg.text = symbol.name + ': $' + symbol.price
+          } else {
+            slackmsg.text = slackmsg.text + ' | ' + symbol.name + ': $' + symbol.price
+          }
+        })
+      })
       .then(() => {
         fetch(slackwebhook, {
           method: 'post',
