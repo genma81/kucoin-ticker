@@ -17,7 +17,16 @@ const symbols = [
   }
 ]
 
-let exchange = ['BTC', 'ETH']
+let exchanges = [
+  {
+    name: 'BTC',
+    price: ''
+  }, {
+    name: 'ETH',
+    price: ''
+  }
+]
+
 let ticks = []
 let attachments = []
 
@@ -27,42 +36,57 @@ const slackmsg = {
   attachments: attachments
 }
 
-let symbolpromises = symbols.map((symbol, symbolindex) => {
-  attachments.push({
-    author_name: symbol.name,
-    author_icon: 'https://assets.kucoin.com/www/1.2.6/assets/coins/' + symbol.name + '.png',
-    color: symbol.color,
-    fields: [
-      {
-        title: 'BTC',
-        value: '',
-        short: true
-      }, {
-        title: 'ETH',
-        value: '',
-        short: true
-      },
-    ]
+fetch('https://api.kucoin.com/v1/open/currencies?coins=BTC,ETH')
+  .then(res => res.json())
+  .then(res => {
+    return exchanges.map((exchange, index) => {
+      switch (exchange.name) {
+        case 'BTC':
+          return exchanges[index].price = res.data.rates.BTC.USD
+        case 'ETH':
+          return exchanges[index].price = res.data.rates.ETH.USD
+      }
+    })
   })
+  .then(() => {
+    let symbolpromises = symbols.map((symbol, symbolindex) => {
+      attachments.push({
+        author_name: symbol.name,
+        author_icon: 'https://assets.kucoin.com/www/1.2.6/assets/coins/' + symbol.name + '.png',
+        color: symbol.color,
+        fields: [
+          {
+            title: 'BTC',
+            value: '',
+            short: true
+          }, {
+            title: 'ETH',
+            value: '',
+            short: true
+          },
+        ]
+      })
 
-  let exchangepromises = exchange.map((exchange, exchangeindex) => {
-    return fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange)
-      .then(res => res.json())
-      .then(res => {
-        attachments[symbolindex].fields[exchangeindex].value = 'last price: ' + res.data.lastDealPrice + '\n change rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%'
+      let exchangepromises = exchanges.map((exchange, exchangeindex) => {
+        return fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange.name)
+          .then(res => res.json())
+          .then(res => {
+            attachments[symbolindex].fields[exchangeindex].value = 'last: ' + res.data.lastDealPrice + '\n rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%' + '\n price: $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+          })
+      })
+
+      return Promise.all(exchangepromises)
+    })
+
+    Promise.all(symbolpromises)
+      .then(() => {
+        fetch(slackwebhook, {
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(slackmsg)
+        })
       })
   })
 
-  return Promise.all(exchangepromises)
-})
-
-Promise.all(symbolpromises)
-  .then(() => {
-    fetch(slackwebhook, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(slackmsg)
-    })
-  })
