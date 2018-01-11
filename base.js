@@ -33,6 +33,7 @@ let attachments = []
 const slackmsg = {
   username: 'kucoin bot',
   icon_emoji: ':robot:',
+  text: '',
   attachments: attachments
 }
 
@@ -71,6 +72,14 @@ fetch('https://api.kucoin.com/v1/open/currencies?coins=BTC,ETH')
         return fetch('https://api.kucoin.com/v1/open/tick?symbol=' + symbol.name + '-' + exchange.name)
           .then(res => res.json())
           .then(res => {
+            if (exchange.name === 'BTC') {
+              if (!slackmsg.text) {
+                slackmsg.text = symbol.name + ': $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+              } else {
+                slackmsg.text = slackmsg.text + ' | ' + symbol.name + ': $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+              }
+            }
+
             attachments[symbolindex].fields[exchangeindex].value = 'last: ' + res.data.lastDealPrice + '\n rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%' + '\n price: $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
           })
       })
