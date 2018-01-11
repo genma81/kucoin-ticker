@@ -1,0 +1,25 @@
+{
+  "name": "kucoin-ticker",
+  "version": "1.0.0",
+  "description": "kucoin coin ticker for slack",
+  "main": "base.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/genma81/kucoin-ticker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/genma81/kucoin-ticker/issues"
+  },
+  "homepage": "https://github.com/genma81/kucoin-ticker#readme",
+  "dependencies": {
+    "node-fetch": "^1.7.3"
+  },
+  "devDependencies": {
+    "dotenv": "^4.0.0"
+  }
+}
