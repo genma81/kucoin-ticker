@@ -77,7 +77,7 @@ fetch('https://api.kucoin.com/v1/open/currencies?coins=BTC,ETH')
             attachments[symbolindex].fields[exchangeindex].value = 'last: ' + res.data.lastDealPrice + '\n rate: ' + Number(res.data.changeRate * 100).toFixed(2) + '%' + '\n price: $' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
 
             if (exchange.name === 'BTC') {
-              symbols[symbols.findIndex(item => item.name === symbol.name)].price = '$' + (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
+              symbols[symbols.findIndex(item => item.name === symbol.name)].price = (Number(res.data.lastDealPrice) * exchange.price).toFixed(3)
             }
           })
       })
